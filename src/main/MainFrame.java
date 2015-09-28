@@ -28,6 +28,8 @@ import javax.swing.JTabbedPane;
 import javax.swing.JToolBar;
 import javax.swing.ScrollPaneConstants;
 
+import java.io.File;
+
 import model.Action;
 import model.FileInfo;
 import model.Mode;
@@ -113,10 +115,14 @@ public class MainFrame {
 			public void mouseClicked(MouseEvent e) {
 				JFileChooser fileChooser = new JFileChooser();
 				Thread t = new Thread(new Runnable() {
-					
 					@Override
 					public void run() {
-						System.out.println(fileChooser.showOpenDialog(frame));
+						if (fileChooser.showOpenDialog(fileChooser) == JFileChooser.APPROVE_OPTION) {
+							File files[] = fileChooser.getSelectedFiles();
+						}
+						else {
+							System.out.println("File access cancelled by user.");
+						}
 					}
 				});
 				t.start();
@@ -148,7 +154,7 @@ public class MainFrame {
 		rdbtnmntmEncryption = new JRadioButtonMenuItem("Encrytion");
 		rdbtnmntmEncryption.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
-				changeMode(Mode.ENCRYTION);
+				changeMode(Mode.ENCRYPTION);
 			}
 		});
 		mnMode.add(rdbtnmntmEncryption);
@@ -254,7 +260,7 @@ public class MainFrame {
 	 * Init all functional components.
 	 */
 	public void initNonInterface() {
-		this.mode = Mode.ENCRYTION;
+		this.mode = Mode.ENCRYPTION;
 		rdbtnmntmEncryption.setSelected(true);
 		rdbtnmntmDecryption.setSelected(false);
 		
@@ -263,8 +269,8 @@ public class MainFrame {
 	}
 	
 	private void changeMode(Mode mode) {
-		if (mode == Mode.ENCRYTION) {
-			mode = Mode.ENCRYTION;
+		if (mode == Mode.ENCRYPTION) {
+			mode = Mode.ENCRYPTION;
 			rdbtnmntmEncryption.setSelected(true);
 			rdbtnmntmDecryption.setSelected(false);
 			this.mode = mode;
