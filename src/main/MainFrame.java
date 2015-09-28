@@ -7,7 +7,12 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 
+import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
@@ -20,10 +25,14 @@ import javax.swing.JRadioButton;
 import javax.swing.JRadioButtonMenuItem;
 import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
-import javax.swing.JTable;
-import javax.swing.JViewport;
+import javax.swing.JToolBar;
+import javax.swing.ScrollPaneConstants;
 
+import model.Action;
+import model.FileInfo;
 import model.Mode;
+import model.Status;
+import model.component.MyTableFiles;
 import utils.Factory;
 
 
@@ -36,8 +45,12 @@ public class MainFrame {
 	 ****************************************/
 	@SuppressWarnings("unused")
 	private Mode mode;
-	private String[][] data = {{"1", "Nguyen Duc Tri", "done", "100%", "OK"}, {"2", "Nguyen Thi Thuy Tien", "done", "100%", "OK"}};
-	private String[] headers = {"id", "File name","status", "progress", "MD5"};
+	private String[][] data = {{"1", "C:/abc.txt", "3.5 KB", "100%", "OK"}, 
+			{"2", "D:/Giai tri/Movie/Toi thay hoa vang tren co xanh.mp4", "2.1 GB", "100%", "OK"}};
+	private String[] headers = {"Index", "Files", "Size", "Progress", "MD5"};
+	private Status status;
+	int percent=0;
+	
 	/****************************************
 	 *                                       *
 	 *        --- INTERFACE COMPONENTS --- 
@@ -46,8 +59,9 @@ public class MainFrame {
 	private JFrame frame;
 	private JRadioButtonMenuItem rdbtnmntmEncryption;
 	private JRadioButtonMenuItem rdbtnmntmDecryption;
-	private JTable table;
-	
+	private MyTableFiles table;
+	JButton btnStartProcess;
+	JButton btnStopProcess;
 	
 	JMenu mnMode;
 	JMenu mnOpenFile;
@@ -55,8 +69,8 @@ public class MainFrame {
 	private JLayeredPane layeredBasic;
 	private JLayeredPane layeredAdvanced;
 	private JButton btnCheckMd;
-	private JButton btnStart;
 	private JScrollPane scrollPaneFiles;
+	Timer timer; // Test
 	
 	public MainFrame() {
 		initInterface();
@@ -148,18 +162,6 @@ public class MainFrame {
 		mnMode.add(rdbtnmntmDecryption);
 		frame.getContentPane().setLayout(null);
 		
-		JRadioButton rdbtnRsa = new JRadioButton("RSA");
-		rdbtnRsa.setBounds(0, 85, 109, 23);
-		frame.getContentPane().add(rdbtnRsa);
-		
-		JRadioButton rdbtnSdes = new JRadioButton("S-DES");
-		rdbtnSdes.setBounds(0, 112, 109, 23);
-		frame.getContentPane().add(rdbtnSdes);
-		
-		JRadioButton rdbtnUnkown = new JRadioButton("Unkown");
-		rdbtnUnkown.setBounds(0, 138, 109, 23);
-		frame.getContentPane().add(rdbtnUnkown);
-		
 		tabbedPane = new JTabbedPane(JTabbedPane.TOP);
 		tabbedPane.setBounds(0, 0, 884, 409);
 		frame.getContentPane().add(tabbedPane);
@@ -169,30 +171,83 @@ public class MainFrame {
 		layeredBasic.setLayout(null);
 		
 		scrollPaneFiles = new JScrollPane();
-		scrollPaneFiles.setBounds(199, 0, 690, 381);
+		scrollPaneFiles.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+		scrollPaneFiles.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
+		scrollPaneFiles.setBounds(200, 48, 690, 333);
 		layeredBasic.add(scrollPaneFiles);
-		table=new JTable(data,headers);
-		table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
-		table.getColumnModel().getColumn(0).setPreferredWidth(30);
-		table.getColumnModel().getColumn(1).setPreferredWidth(40);
 		
-	    scrollPaneFiles.setViewportView(table);
+		// TABLE
+		List<FileInfo> files = new ArrayList<FileInfo>();
+		files.add(new FileInfo("C:/abc.txt", 400, 0, true));
+		files.add(new FileInfo("D:/das/dsa/abc.txt", 40000, 0, true));
+		files.add(new FileInfo("C:/abc.txt", 400, 56, true));
+		files.add(new FileInfo("D:/das/dsa/abc.txt", 40000, 0, true));
+		files.add(new FileInfo("C:/abc.txt", 400, 56, true));
+		files.add(new FileInfo("D:/das/dsa/abc.txt", 40000, 0, true));
+		files.add(new FileInfo("C:/abc.txt", 400, 56, true));
+		files.add(new FileInfo("D:/das/dsa/abc.txt", 40000, 0, true));
+		files.add(new FileInfo("C:/abc.txt", 400, 56, true));
+		files.add(new FileInfo("D:/das/dsa/abc.txt", 40000, 0, true));
+		files.add(new FileInfo("C:/abc.txt", 400, 56, true));
+		files.add(new FileInfo("D:/das/dsa/abc.txt", 40000, 86, true));
+		
+		table = new MyTableFiles(files);
+	    scrollPaneFiles.setViewportView(table.getTable());
 	    
-	    btnStart = new JButton("Start");
-	    btnStart.setBounds(0, 324, 200, 23);
-	    layeredBasic.add(btnStart);
+	    table.updateProgress(2, 100);
 	    
 	    btnCheckMd = new JButton("Check MD5");
+	    btnCheckMd.setBounds(0, 275, 200, 23);
 	    btnCheckMd.addActionListener(new ActionListener() {
 	    	public void actionPerformed(ActionEvent arg0) {
 	    	}
 	    });
-	    btnCheckMd.setBounds(0, 275, 200, 23);
 	    layeredBasic.add(btnCheckMd);
+	    
+	    JToolBar toolBar = new JToolBar();
+	    toolBar.setBounds(200, 0, 679, 59);
+	    layeredBasic.add(toolBar);
+	    
+	    btnStartProcess = new JButton("Start");
+	    btnStartProcess.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 30));
+	    btnStartProcess.addMouseListener(new MouseAdapter() {
+	    	@Override
+	    	public void mouseClicked(MouseEvent e) {
+	    		if (status == Status.STOP)
+	    			changeStatus(Action.START);
+	    		else if (status == Status.RUNNING)
+	    			changeStatus(Action.PAUSE);
+	    		else if (status == Status.PAUSE)
+	    			changeStatus(Action.RESUME);
+	    	}
+	    });
+	    btnStartProcess.setIcon(Factory.getImageIcon("toolbar/start_process"));
+	    toolBar.add(btnStartProcess);
+	    
+	    btnStopProcess = new JButton("Stop");
+	    btnStopProcess.addActionListener(new ActionListener() {
+	    	public void actionPerformed(ActionEvent e) {
+	    		changeStatus(Action.STOP);
+	    	}
+	    });
+	    btnStopProcess.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 30));
+	    btnStopProcess.setIcon(Factory.getImageIcon("toolbar/stop_process"));
+	    toolBar.add(btnStopProcess);
+	    
+	    JRadioButton rdbtnRsa = new JRadioButton("RSA");
+	    rdbtnRsa.setBounds(20, 59, 109, 23);
+	    layeredBasic.add(rdbtnRsa);
+	    
+	    JRadioButton rdbtnSdes = new JRadioButton("S-DES");
+	    rdbtnSdes.setBounds(20, 86, 109, 23);
+	    layeredBasic.add(rdbtnSdes);
+	    
+	    JRadioButton rdbtnUnkown = new JRadioButton("Unkown");
+	    rdbtnUnkown.setBounds(20, 112, 109, 23);
+	    layeredBasic.add(rdbtnUnkown);
 	    
 	    layeredAdvanced = new JLayeredPane();
 	    tabbedPane.addTab("Advanced", null, layeredAdvanced, null);
-		
 	}
 	
 	/**
@@ -202,6 +257,9 @@ public class MainFrame {
 		this.mode = Mode.ENCRYTION;
 		rdbtnmntmEncryption.setSelected(true);
 		rdbtnmntmDecryption.setSelected(false);
+		
+		this.status = Status.STOP;
+		this.btnStopProcess.setEnabled(false);
 	}
 	
 	private void changeMode(Mode mode) {
@@ -216,6 +274,43 @@ public class MainFrame {
 			rdbtnmntmEncryption.setSelected(false);
 			rdbtnmntmDecryption.setSelected(true);
 			this.mode = mode;
+		}
+	}
+
+	private void changeStatus(Action action) {
+		if (action == Action.STOP) {
+			btnStartProcess.setIcon(Factory.getImageIcon("toolbar/start_process"));
+    		btnStartProcess.setText("Start");
+    		btnStopProcess.setEnabled(false);
+    		this.status = Status.STOP;
+		}
+		else if (action == Action.PAUSE) {
+    		btnStartProcess.setIcon(Factory.getImageIcon("toolbar/start_process"));
+    		btnStartProcess.setText("Resume");
+    		this.status = Status.PAUSE;
+    		timer.cancel();
+		}
+		else if (action == Action.RESUME) {
+    		btnStartProcess.setIcon(Factory.getImageIcon("toolbar/pause_process"));
+    		btnStartProcess.setText("Pause");
+    		status = Status.RUNNING;
+			
+		}
+		else if (action == Action.START) {
+			btnStartProcess.setIcon(Factory.getImageIcon("toolbar/pause_process"));
+    		btnStartProcess.setText("Pause");
+    		status = Status.RUNNING;
+    		btnStopProcess.setEnabled(true);
+    		timer = new Timer();
+    		timer.schedule(new TimerTask() {
+    			
+    			@Override
+    			public void run() {
+    				percent++;
+    				table.updateProgress(0, percent);
+    				
+    			}
+    		}, 500, 100);
 		}
 	}
 }
