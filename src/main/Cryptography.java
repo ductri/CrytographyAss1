@@ -15,8 +15,8 @@ import javax.crypto.*;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
+import constanst.Mode;
 import model.Algorithm;
-import model.Mode;
 
 public class Cryptography {
 	byte[] buf;
