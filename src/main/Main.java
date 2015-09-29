@@ -18,8 +18,8 @@ public class Main {
 					new MainFrame();
 					long startTime = System.currentTimeMillis();
 
-					new Cryptography(Algorithm.AES, "resources/publickey", Mode.ENCRYPTION, "resources/plaintext.txt", "resources/ciphertext.txt");
-					//new Cryptography(Algorithm.AES, "resources/publickey", Mode.DECRYPTION, "resources/ciphertext.txt", "resources/plaintext.txt");
+					new Cryptography(Algorithm.AES, "resources/publickey", Mode.ENCRYPTION, "resources/a.pdf", true);
+					//new Cryptography(Algorithm.AES, "resources/publickey", Mode.DECRYPTION, "resources/ciphertext/a.zip", false);
 
 					long endTime   = System.currentTimeMillis();
 					long totalTime = endTime - startTime;
