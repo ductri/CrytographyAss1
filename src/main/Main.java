@@ -5,6 +5,8 @@ import java.awt.EventQueue;
 import org.jb2011.lnf.beautyeye.BeautyEyeLNFHelper;
 import org.jb2011.lnf.beautyeye.BeautyEyeLNFHelper.FrameBorderStyle;
 
+import constanst.Mode;
+import model.Algorithm;
 public class Main {
 	public static void main(String[] args) {
 		EventQueue.invokeLater(new Runnable() {
@@ -14,7 +16,11 @@ public class Main {
 					BeautyEyeLNFHelper . frameBorderStyle = FrameBorderStyle.generalNoTranslucencyShadow;   
 					org.jb2011.lnf.beautyeye.BeautyEyeLNFHelper.launchBeautyEyeLNF();
 					new MainFrame();
-					
+					long startTime = System.currentTimeMillis();
+					new Cryptography(Algorithm.AES, "resources/publickey", Mode.ENCRYPTION, "resources/plaintext.txt", "resources/ciphertext.txt");
+					long endTime   = System.currentTimeMillis();
+					long totalTime = endTime - startTime;
+					System.out.println((float)totalTime/1000);
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
