@@ -113,7 +113,7 @@ public class MainFrame {
 			}
 			@Override
 			public void mouseClicked(MouseEvent e) {
-				JFileChooser fileChooser = new JFileChooser();
+				final JFileChooser fileChooser = new JFileChooser();
 				Thread t = new Thread(new Runnable() {
 					@Override
 					public void run() {
