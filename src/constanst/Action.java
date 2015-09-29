@@ -1,4 +1,4 @@
-package model;
+package constanst;
 
 public enum Action {
 	START, STOP, RESUME, PAUSE

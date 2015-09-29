@@ -28,11 +28,14 @@ import javax.swing.JTabbedPane;
 import javax.swing.JToolBar;
 import javax.swing.ScrollPaneConstants;
 
-import model.Action;
+import constanst.Action;
+import constanst.Algorithm;
+import constanst.Mode;
+import constanst.Status;
 import model.FileInfo;
-import model.Mode;
-import model.Status;
+import model.FolderInfo;
 import model.component.MyTableFiles;
+import model.component.MyTableFolders;
 import utils.Factory;
 
 
@@ -45,9 +48,6 @@ public class MainFrame {
 	 ****************************************/
 	@SuppressWarnings("unused")
 	private Mode mode;
-	private String[][] data = {{"1", "C:/abc.txt", "3.5 KB", "100%", "OK"}, 
-			{"2", "D:/Giai tri/Movie/Toi thay hoa vang tren co xanh.mp4", "2.1 GB", "100%", "OK"}};
-	private String[] headers = {"Index", "Files", "Size", "Progress", "MD5"};
 	private Status status;
 	int percent=0;
 	
@@ -59,7 +59,8 @@ public class MainFrame {
 	private JFrame frame;
 	private JRadioButtonMenuItem rdbtnmntmEncryption;
 	private JRadioButtonMenuItem rdbtnmntmDecryption;
-	private MyTableFiles table;
+	private MyTableFiles tableFile;
+	private MyTableFolders tableFolder;
 	JButton btnStartProcess;
 	JButton btnStopProcess;
 	
@@ -68,7 +69,6 @@ public class MainFrame {
 	private JTabbedPane tabbedPane;
 	private JLayeredPane layeredBasic;
 	private JLayeredPane layeredAdvanced;
-	private JButton btnCheckMd;
 	private JScrollPane scrollPaneFiles;
 	Timer timer; // Test
 	
@@ -191,18 +191,10 @@ public class MainFrame {
 		files.add(new FileInfo("C:/abc.txt", 400, 56, true));
 		files.add(new FileInfo("D:/das/dsa/abc.txt", 40000, 86, true));
 		
-		table = new MyTableFiles(files);
-	    scrollPaneFiles.setViewportView(table.getTable());
+		tableFile = new MyTableFiles(files);
+	    scrollPaneFiles.setViewportView(tableFile.getTable());
 	    
-	    table.updateProgress(2, 100);
 	    
-	    btnCheckMd = new JButton("Check MD5");
-	    btnCheckMd.setBounds(0, 275, 200, 23);
-	    btnCheckMd.addActionListener(new ActionListener() {
-	    	public void actionPerformed(ActionEvent arg0) {
-	    	}
-	    });
-	    layeredBasic.add(btnCheckMd);
 	    
 	    JToolBar toolBar = new JToolBar();
 	    toolBar.setBounds(200, 0, 679, 59);
@@ -248,6 +240,20 @@ public class MainFrame {
 	    
 	    layeredAdvanced = new JLayeredPane();
 	    tabbedPane.addTab("Advanced", null, layeredAdvanced, null);
+	    
+	    JScrollPane scrollPaneFolders = new JScrollPane();
+	    scrollPaneFolders.setBounds(10, 25, 859, 333);
+	    layeredAdvanced.add(scrollPaneFolders);
+	    
+	    List<FolderInfo> folders = new ArrayList<FolderInfo>();
+	    folders.add(new FolderInfo("C:/abc.txt", 400, Algorithm.DSA));
+	    folders.add(new FolderInfo("C:/abc.txt", 400, Algorithm.DSA));
+	    folders.add(new FolderInfo("C:/abc.txt", 400, Algorithm.DSA));
+	    folders.add(new FolderInfo("C:/abc.txt", 400, Algorithm.DSA));
+	    folders.add(new FolderInfo("C:/abc.txt", 400, Algorithm.DSA));
+	    
+		tableFolder = new MyTableFolders(folders);
+		scrollPaneFolders.setViewportView(tableFolder.getTable());
 	}
 	
 	/**
@@ -307,7 +313,7 @@ public class MainFrame {
     			@Override
     			public void run() {
     				percent++;
-    				table.updateProgress(0, percent);
+    				tableFile.updateProgress(0, percent);
     				
     			}
     		}, 500, 100);
