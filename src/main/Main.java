@@ -17,12 +17,10 @@ public class Main {
 					org.jb2011.lnf.beautyeye.BeautyEyeLNFHelper.launchBeautyEyeLNF();
 					new MainFrame();
 					long startTime = System.currentTimeMillis();
-<<<<<<< HEAD
-					//new Cryptography(Algorithm.AES, "resources/publickey", Mode.ENCRYPTION, "resources/plaintext.txt", "resources/ciphertext.txt");
-					new Cryptography(Algorithm.AES, "resources/publickey", Mode.DECRYPTION, "resources/ciphertext.txt", "resources/plaintext.txt");
-=======
+
 					new Cryptography(Algorithm.AES, "resources/publickey", Mode.ENCRYPTION, "resources/plaintext.txt", "resources/ciphertext.txt");
->>>>>>> 560dab3833fd5f0d61bcfe16a95c959d47928dd6
+					//new Cryptography(Algorithm.AES, "resources/publickey", Mode.DECRYPTION, "resources/ciphertext.txt", "resources/plaintext.txt");
+
 					long endTime   = System.currentTimeMillis();
 					long totalTime = endTime - startTime;
 					System.out.println((float)totalTime/1000);

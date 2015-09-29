@@ -9,7 +9,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.*;
 import java.security.spec.AlgorithmParameterSpec;
-
+import java.util.Arrays;
 
 import javax.crypto.*;
 import javax.crypto.spec.IvParameterSpec;
@@ -35,12 +35,13 @@ public class Cryptography {
 	    }
 	}
 	
+	/*** Encryption Function ***/
 	private void encrypt(String pathToKey,Algorithm al,String pathToInput, String pathToOutput) throws IOException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, InvalidAlgorithmParameterException {
 		byte[] iv;
 		InputStream in = new FileInputStream(pathToInput);
 		OutputStream out = new FileOutputStream(pathToOutput);
+		// Generate hash value
 		byte[] hashValue = generateMD5(in);
-		System.out.println(bytesToHex(hashValue));
 		if (al == Algorithm.AES) {
 			iv = new byte[] { (byte) 0x8E, 0x12, 0x39, (byte) 0x9C, 0x07, 0x72, 0x6F, 0x5A , 0x07, 0x09, 0x1A, 0x3C, 0x4D, 0x7F, (byte)0x8C, 0x5A};
 		    AlgorithmParameterSpec paramSpec = new IvParameterSpec(iv);
@@ -72,6 +73,7 @@ public class Cryptography {
 	    out = new CipherOutputStream(out, cipher);
 	    // Encrypt hash value
 	    out.write(hashValue, 0, hashValue.length);
+	    in = new FileInputStream(pathToInput);
 	    int numRead = 0;
 	    while ((numRead = in.read(buf)) >= 0) {
 	    	out.write(buf, 0, numRead);
@@ -82,6 +84,7 @@ public class Cryptography {
 		in.close();
 	}
 	
+	/*** Decryption Function ***/
 	private void decrypt(String pathToKey, Algorithm al, String pathToInput, String pathToOutput) throws IOException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, InvalidAlgorithmParameterException {
 		Path path = Paths.get(pathToKey);
 		byte[] encoded = Files.readAllBytes(path);
@@ -108,6 +111,8 @@ public class Cryptography {
 			// Unknown Algorithm
 		}
 		in = new CipherInputStream(in, cipher);
+		
+		//Get hash value from plain text
 		byte[] hashValueInPlainText = new byte[16];
 		if (in.read(hashValueInPlainText) == -1) {
 			System.out.println("Wrong message!");
@@ -118,16 +123,20 @@ public class Cryptography {
 	    }
 		out.flush();
 		out.close();
+		in.close();
 	    InputStream inputTemp = new FileInputStream(pathToOutput);
+	    //Get hash value from ciphertext
 	    byte[] hashValueInCipherText = generateMD5(inputTemp);
-		System.out.println(bytesToHex(hashValueInCipherText));
-	    if (hashValueInPlainText != hashValueInCipherText) {
+	    
+	    //Compare hash value
+	    if (!Arrays.equals(hashValueInPlainText, hashValueInCipherText)) {
 	    	System.out.println("Check MD5: False");
 	    	MD5 = false;
 	    }
-		in.close();
+
 	}
 	
+	/*** Md5 function ***/
 	public byte[] generateMD5(InputStream in) throws NoSuchAlgorithmException, IOException {
 		MessageDigest digest = MessageDigest.getInstance("MD5");
 		byte[] bytebuffer = new byte[1024];
@@ -141,6 +150,10 @@ public class Cryptography {
 		
 		return hashValue;
 	}
+	
+	/*** Help function ***/
+	
+	/*** Convert from bytes to hex character : Use to show Md5 hash value ***/
 	final protected static char[] hexArray = "0123456789ABCDEF".toCharArray();
 	public static String bytesToHex(byte[] bytes) {
 	    char[] hexChars = new char[bytes.length * 2];
