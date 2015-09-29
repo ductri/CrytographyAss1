@@ -18,8 +18,8 @@ public class Main {
 					org.jb2011.lnf.beautyeye.BeautyEyeLNFHelper.launchBeautyEyeLNF();
 					new MainFrame();
 					long startTime = System.currentTimeMillis();
-					new Cryptography(Algorithm.AES, "resources/publickey", Mode.ENCRYPTION, "resources/plaintext.txt", "resources/ciphertext.txt");
-					//new Cryptography(Algorithm.AES, "resources/publickey", Mode.DECRYPTION, "resources/ciphertext.txt", "resources/plaintext.txt");
+					//new Cryptography(Algorithm.AES, "resources/publickey", Mode.ENCRYPTION, "resources/plaintext.txt", "resources/ciphertext.txt");
+					new Cryptography(Algorithm.AES, "resources/publickey", Mode.DECRYPTION, "resources/ciphertext.txt", "resources/plaintext.txt");
 					long endTime   = System.currentTimeMillis();
 					long totalTime = endTime - startTime;
 					System.out.println((float)totalTime/1000);

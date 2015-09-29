@@ -22,21 +22,25 @@ public class Cryptography {
 	byte[] buf;
 	Cipher cipher;
 	PublicKey publicKey = null;
+	boolean MD5 = true;
 	public Cryptography(Algorithm al, String pathToKey, Mode mode, String pathToInput, String pathToOutput) throws IOException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, InvalidAlgorithmParameterException {
 	    FileInputStream inputFile = new FileInputStream(pathToInput);
 	    FileOutputStream outputFile = new FileOutputStream(pathToOutput);
 	    
 	    if (mode == Mode.ENCRYPTION) {
-	    	encrypt(pathToKey, al,inputFile, outputFile);
+	    	encrypt(pathToKey, al,pathToInput, pathToOutput);
 	    }
 	    else {
-	    	decrypt(pathToKey, al, inputFile, outputFile);
+	    	decrypt(pathToKey, al, pathToInput, pathToOutput);
 	    }
 	}
 	
-	private void encrypt(String pathToKey,Algorithm al,InputStream in, OutputStream out) throws IOException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, InvalidAlgorithmParameterException {
+	private void encrypt(String pathToKey,Algorithm al,String pathToInput, String pathToOutput) throws IOException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, InvalidAlgorithmParameterException {
 		byte[] iv;
-
+		InputStream in = new FileInputStream(pathToInput);
+		OutputStream out = new FileOutputStream(pathToOutput);
+		byte[] hashValue = generateMD5(in);
+		System.out.println(bytesToHex(hashValue));
 		if (al == Algorithm.AES) {
 			iv = new byte[] { (byte) 0x8E, 0x12, 0x39, (byte) 0x9C, 0x07, 0x72, 0x6F, 0x5A , 0x07, 0x09, 0x1A, 0x3C, 0x4D, 0x7F, (byte)0x8C, 0x5A};
 		    AlgorithmParameterSpec paramSpec = new IvParameterSpec(iv);
@@ -66,20 +70,24 @@ public class Cryptography {
 		}
 		
 	    out = new CipherOutputStream(out, cipher);
-
+	    // Encrypt hash value
+	    out.write(hashValue, 0, hashValue.length);
 	    int numRead = 0;
 	    while ((numRead = in.read(buf)) >= 0) {
 	    	out.write(buf, 0, numRead);
 	    }
+
 		out.flush();
 		out.close();
 		in.close();
 	}
 	
-	private void decrypt(String pathToKey, Algorithm al, InputStream in, OutputStream out) throws IOException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, InvalidAlgorithmParameterException {
+	private void decrypt(String pathToKey, Algorithm al, String pathToInput, String pathToOutput) throws IOException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, InvalidAlgorithmParameterException {
 		Path path = Paths.get(pathToKey);
 		byte[] encoded = Files.readAllBytes(path);
 		byte[] iv;
+		InputStream in = new FileInputStream(pathToInput);
+		OutputStream out = new FileOutputStream(pathToOutput);
 		if (al == Algorithm.AES) {
 			iv = new byte[] { (byte) 0x8E, 0x12, 0x39, (byte) 0x9C, 0x07, 0x72, 0x6F, 0x5A , 0x07, 0x09, 0x1A, 0x3C, 0x4D, 0x7F, (byte)0x8C, 0x5A};
 		    AlgorithmParameterSpec paramSpec = new IvParameterSpec(iv);
@@ -100,13 +108,48 @@ public class Cryptography {
 			// Unknown Algorithm
 		}
 		in = new CipherInputStream(in, cipher);
-
+		byte[] hashValueInPlainText = new byte[16];
+		if (in.read(hashValueInPlainText) == -1) {
+			System.out.println("Wrong message!");
+		}
 	    int numRead = 0;
 	    while ((numRead = in.read(buf)) >= 0) {
 	    	out.write(buf, 0, numRead);
 	    }
 		out.flush();
 		out.close();
+	    InputStream inputTemp = new FileInputStream(pathToOutput);
+	    byte[] hashValueInCipherText = generateMD5(inputTemp);
+		System.out.println(bytesToHex(hashValueInCipherText));
+	    if (hashValueInPlainText != hashValueInCipherText) {
+	    	System.out.println("Check MD5: False");
+	    	MD5 = false;
+	    }
 		in.close();
 	}
+	
+	public byte[] generateMD5(InputStream in) throws NoSuchAlgorithmException, IOException {
+		MessageDigest digest = MessageDigest.getInstance("MD5");
+		byte[] bytebuffer = new byte[1024];
+		int numRead = 0;
+		
+		while((numRead = in.read(bytebuffer)) > 0) {
+			digest.update(bytebuffer, 0, numRead);
+		}
+		
+		byte[] hashValue = digest.digest();
+		
+		return hashValue;
+	}
+	final protected static char[] hexArray = "0123456789ABCDEF".toCharArray();
+	public static String bytesToHex(byte[] bytes) {
+	    char[] hexChars = new char[bytes.length * 2];
+	    for ( int j = 0; j < bytes.length; j++ ) {
+	        int v = bytes[j] & 0xFF;
+	        hexChars[j * 2] = hexArray[v >>> 4];
+	        hexChars[j * 2 + 1] = hexArray[v & 0x0F];
+	    }
+	    return new String(hexChars);
+	}
+	
 }
