@@ -9,9 +9,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.*;
 import java.security.spec.AlgorithmParameterSpec;
-import java.security.spec.EncodedKeySpec;
-import java.security.spec.InvalidKeySpecException;
-import java.security.spec.X509EncodedKeySpec;
+
 
 import javax.crypto.*;
 import javax.crypto.spec.IvParameterSpec;
@@ -23,7 +21,6 @@ import model.Mode;
 public class Cryptography {
 	byte[] buf;
 	Cipher cipher;
-	private String algorithm = "";
 	PublicKey publicKey = null;
 	public Cryptography(Algorithm al, String pathToKey, Mode mode, String pathToInput, String pathToOutput) throws IOException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, InvalidAlgorithmParameterException {
 	    FileInputStream inputFile = new FileInputStream(pathToInput);
@@ -38,25 +35,30 @@ public class Cryptography {
 	}
 	
 	private void encrypt(String pathToKey,Algorithm al,InputStream in, OutputStream out) throws IOException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, InvalidAlgorithmParameterException {
-		byte[] iv = new byte[] { (byte) 0x8E, 0x12, 0x39, (byte) 0x9C, 0x07, 0x72, 0x6F, 0x5A };
-	    AlgorithmParameterSpec paramSpec = new IvParameterSpec(iv);
+		byte[] iv;
+
 		if (al == Algorithm.AES) {
+			iv = new byte[] { (byte) 0x8E, 0x12, 0x39, (byte) 0x9C, 0x07, 0x72, 0x6F, 0x5A , 0x07, 0x09, 0x1A, 0x3C, 0x4D, 0x7F, (byte)0x8C, 0x5A};
+		    AlgorithmParameterSpec paramSpec = new IvParameterSpec(iv);
 			SecretKey key = KeyGenerator.getInstance("AES").generateKey();
 			byte[] encoded = key.getEncoded();
 			FileOutputStream keyfos = new FileOutputStream(pathToKey);
 			keyfos.write(encoded);
 			keyfos.close();
-			cipher = Cipher.getInstance("AES/CBC/NoPadding");
+			buf = new byte[16];
+			cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
 			cipher.init(Cipher.ENCRYPT_MODE, key, paramSpec);
 		}
 		else if (al == Algorithm.DES) {
+			iv = new byte[] { (byte) 0x8E, 0x12, 0x39, (byte) 0x9C, 0x07, 0x72, 0x6F, 0x5A };
+		    AlgorithmParameterSpec paramSpec = new IvParameterSpec(iv);
 			buf = new byte[8];
 			SecretKey key = KeyGenerator.getInstance("DES").generateKey();
 			byte[] encoded = key.getEncoded();
 			FileOutputStream keyfos = new FileOutputStream("resources/publickey");
 			keyfos.write(encoded);
 			keyfos.close();
-			cipher = Cipher.getInstance("DES/CBC/NoPadding");
+			cipher = Cipher.getInstance("DES/CBC/PKCS5Padding");
 			cipher.init(Cipher.ENCRYPT_MODE, key, paramSpec);
 		}
 		else {
@@ -66,15 +68,7 @@ public class Cryptography {
 	    out = new CipherOutputStream(out, cipher);
 
 	    int numRead = 0;
-	    char c;
 	    while ((numRead = in.read(buf)) >= 0) {
-/*	    	for (byte b:buf) {
-	            // convert byte to character
-	            c=(char)b;
-	            
-	            // prints character
-	            System.out.println((int)b);
-	    	}*/
 	    	out.write(buf, 0, numRead);
 	    }
 		out.flush();
@@ -85,21 +79,21 @@ public class Cryptography {
 	private void decrypt(String pathToKey, Algorithm al, InputStream in, OutputStream out) throws IOException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, InvalidAlgorithmParameterException {
 		Path path = Paths.get(pathToKey);
 		byte[] encoded = Files.readAllBytes(path);
-    	for (byte b:encoded) {
-            // prints character
-            System.out.println((int)b);
-    	}
-		byte[] iv = new byte[] { (byte) 0x8E, 0x12, 0x39, (byte) 0x9C, 0x07, 0x72, 0x6F, 0x5A };
-	    AlgorithmParameterSpec paramSpec = new IvParameterSpec(iv);
+		byte[] iv;
 		if (al == Algorithm.AES) {
+			iv = new byte[] { (byte) 0x8E, 0x12, 0x39, (byte) 0x9C, 0x07, 0x72, 0x6F, 0x5A , 0x07, 0x09, 0x1A, 0x3C, 0x4D, 0x7F, (byte)0x8C, 0x5A};
+		    AlgorithmParameterSpec paramSpec = new IvParameterSpec(iv);
 			SecretKey key = new SecretKeySpec(encoded, "AES");
-			cipher = Cipher.getInstance("AES/CBC/NoPadding");
+			buf = new byte[16];
+			cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
 			cipher.init(Cipher.DECRYPT_MODE, key, paramSpec);
 		}
 		else if (al == Algorithm.DES) {
+			iv = new byte[] { (byte) 0x8E, 0x12, 0x39, (byte) 0x9C, 0x07, 0x72, 0x6F, 0x5A };
+		    AlgorithmParameterSpec paramSpec = new IvParameterSpec(iv);
 			buf = new byte[8];
 			SecretKey key = new SecretKeySpec(encoded, "DES");
-			cipher = Cipher.getInstance("DES/CBC/NoPadding");
+			cipher = Cipher.getInstance("DES/CBC/PKCS5Padding");
 			cipher.init(Cipher.DECRYPT_MODE, key, paramSpec);
 		}
 		else {
@@ -108,15 +102,7 @@ public class Cryptography {
 		in = new CipherInputStream(in, cipher);
 
 	    int numRead = 0;
-	    char c;
 	    while ((numRead = in.read(buf)) >= 0) {
-/*	    	for (byte b:buf) {
-	            // convert byte to character
-	            c=(char)b;
-	            
-	            // prints character
-	            System.out.println((int)b);
-	    	}*/
 	    	out.write(buf, 0, numRead);
 	    }
 		out.flush();
