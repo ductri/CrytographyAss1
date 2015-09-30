@@ -42,13 +42,13 @@ public class Cryptography {
 		byte[] iv;
 		Path path;
 		if (al == Algorithm.AES) {
-			path = Paths.get("resources/key/AES");
+			path = Paths.get("resources\\key\\AES");
 		}
 		else if (al == Algorithm.DES) {
-			path = Paths.get("resources/key/DES");
+			path = Paths.get("resources\\key\\DES");
 		}
 		else {
-			path = Paths.get("resources/key/DESede");
+			path = Paths.get("resources\\key\\DESede");
 		}
 		byte[] encoded = Files.readAllBytes(path);
 		String fileName = getFileName(pathToFile);
@@ -62,12 +62,12 @@ public class Cryptography {
 		if (zip) {
 			compress(pathToFile);
 			extension = "zip";
-			pathToFile = pathToFolder + "/" + fileName + ".zip";
+			pathToFile = pathToFolder + "\\" + fileName + ".zip";
 		}
 		
 		// Create Output file
 
-		String pathToOutput = pathToFolder + "/en_" + fileName + "." + extension;
+		String pathToOutput = pathToFolder + "\\en_" + fileName + "." + extension;
 		File file = new File(pathToOutput);
 		file.createNewFile();
 		OutputStream out = new FileOutputStream(pathToOutput);
@@ -115,13 +115,13 @@ public class Cryptography {
 	private void decrypt(Algorithm al, String pathToFile, boolean unzip) throws IOException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, InvalidAlgorithmParameterException {
 		Path path;
 		if (al == Algorithm.AES) {
-			path = Paths.get("resources/key/AES");
+			path = Paths.get("resources\\key\\AES");
 		}
 		else if (al == Algorithm.DES) {
-			path = Paths.get("resources/key/DES");
+			path = Paths.get("resources\\key\\DES");
 		}
 		else {
-			path = Paths.get("resources/key/DESede");
+			path = Paths.get("resources\\key\\DESede");
 		}
 		byte[] encoded = Files.readAllBytes(path);
 		byte[] iv;
@@ -130,7 +130,7 @@ public class Cryptography {
 		String extension = getExtension(pathToFile);
 		String pathToFolder = getPathToFolder(pathToFile);
 		InputStream in = new FileInputStream(pathToFile);
-		pathToOutput = pathToFolder + "/" + fileName.substring(3, fileName.length()) + "." + extension;
+		pathToOutput = pathToFolder + "\\" + fileName.substring(3, fileName.length()) + "." + extension;
 
 		File file = new File(pathToOutput);
 		file.createNewFile();
@@ -239,7 +239,7 @@ public class Cryptography {
     	String extension = "";
     	String pathToFolder = getPathToFolder(pathToFile);
     	String fileName = ze.getName();
-    	File newFile = new File(pathToFolder + "/" + fileName);
+    	File newFile = new File(pathToFolder + "\\" + fileName);
     	FileOutputStream fos = new FileOutputStream(newFile);             
 
         int numRead;
@@ -250,14 +250,14 @@ public class Cryptography {
         fos.close();   
         zis.closeEntry();
     	zis.close();
-    	return pathToFolder + "/" + fileName;
+    	return pathToFolder + "\\" + fileName;
 
 	}
 	/***** Help function *****/
 	
 	/*** Get name of a file without extension ***/
 	private String getFileName(String pathToFile) {
-		int pos1 = pathToFile.lastIndexOf("/");
+		int pos1 = pathToFile.lastIndexOf("\\");
 		int pos2 = pathToFile.lastIndexOf(".");
 		return pathToFile.substring(pos1 + 1, pos2);
 	}
@@ -270,7 +270,7 @@ public class Cryptography {
 	 * Get path to folder containing the file
 	 */
 	private String getPathToFolder(String pathToFile) {
-		int pos = pathToFile.lastIndexOf("/");
+		int pos = pathToFile.lastIndexOf("\\");
 		return pathToFile.substring(0, pos);
 	}
 	
@@ -285,6 +285,5 @@ public class Cryptography {
 	    }
 	    return new String(hexChars);
 	}
-	
 	
 }
