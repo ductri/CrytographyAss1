@@ -28,18 +28,29 @@ public class Cryptography {
 	PublicKey publicKey = null;
 	boolean MD5 = true;
 	String pathToZipFile = "resources";
-	public Cryptography(Algorithm al, String pathToKey, Mode mode, String pathToFile, boolean zip) throws IOException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, InvalidAlgorithmParameterException {
+	public Cryptography(Algorithm al, Mode mode, String pathToFile, boolean zip) throws IOException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, InvalidAlgorithmParameterException {
 	    if (mode == Mode.ENCRYPTION) {
-	    	encrypt(pathToKey, al, pathToFile, zip);
+	    	encrypt(al, pathToFile, zip);
 	    }
 	    else {
-	    	decrypt(pathToKey, al, pathToFile, zip);
+	    	decrypt(al, pathToFile, zip);
 	    }
 	}
 	
 	/*** Encryption Function ***/
-	private void encrypt(String pathToKey,Algorithm al,String pathToFile,boolean zip) throws IOException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, InvalidAlgorithmParameterException {
+	private void encrypt(Algorithm al,String pathToFile,boolean zip) throws IOException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, InvalidAlgorithmParameterException {
 		byte[] iv;
+		Path path;
+		if (al == Algorithm.AES) {
+			path = Paths.get("resources/key/AES");
+		}
+		else if (al == Algorithm.DES) {
+			path = Paths.get("resources/key/DES");
+		}
+		else {
+			path = Paths.get("resources/key/DESede");
+		}
+		byte[] encoded = Files.readAllBytes(path);
 		String fileName = getFileName(pathToFile);
 		String extension = getExtension(pathToFile);
 		InputStream in = new FileInputStream(pathToFile);
@@ -63,11 +74,7 @@ public class Cryptography {
 		if (al == Algorithm.AES) {
 			iv = new byte[] { (byte) 0x8E, 0x12, 0x39, (byte) 0x9C, 0x07, 0x72, 0x6F, 0x5A , 0x07, 0x09, 0x1A, 0x3C, 0x4D, 0x7F, (byte)0x8C, 0x5A};
 		    AlgorithmParameterSpec paramSpec = new IvParameterSpec(iv);
-			SecretKey key = KeyGenerator.getInstance("AES").generateKey();
-			byte[] encoded = key.getEncoded();
-			FileOutputStream keyfos = new FileOutputStream(pathToKey);
-			keyfos.write(encoded);
-			keyfos.close();
+			SecretKey key = new SecretKeySpec(encoded, "AES");
 			buf = new byte[16];
 			cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
 			cipher.init(Cipher.ENCRYPT_MODE, key, paramSpec);
@@ -76,16 +83,17 @@ public class Cryptography {
 			iv = new byte[] { (byte) 0x8E, 0x12, 0x39, (byte) 0x9C, 0x07, 0x72, 0x6F, 0x5A };
 		    AlgorithmParameterSpec paramSpec = new IvParameterSpec(iv);
 			buf = new byte[8];
-			SecretKey key = KeyGenerator.getInstance("DES").generateKey();
-			byte[] encoded = key.getEncoded();
-			FileOutputStream keyfos = new FileOutputStream("resources/publickey");
-			keyfos.write(encoded);
-			keyfos.close();
+			SecretKey key = new SecretKeySpec(encoded, "DES");
 			cipher = Cipher.getInstance("DES/CBC/PKCS5Padding");
 			cipher.init(Cipher.ENCRYPT_MODE, key, paramSpec);
 		}
 		else {
-			// Unknown Algorithm
+			iv = new byte[] { (byte) 0x8E, 0x12, 0x39, (byte) 0x9C, 0x07, 0x72, 0x6F, 0x5A };
+		    AlgorithmParameterSpec paramSpec = new IvParameterSpec(iv);
+			SecretKey key = new SecretKeySpec(encoded, "DESede");
+			buf = new byte[21];
+			cipher = Cipher.getInstance("DESede/CBC/PKCS5Padding");
+			cipher.init(Cipher.ENCRYPT_MODE, key, paramSpec);
 		}
 		
 	    out = new CipherOutputStream(out, cipher);
@@ -103,8 +111,17 @@ public class Cryptography {
 	}
 	
 	/*** Decryption Function ***/
-	private void decrypt(String pathToKey, Algorithm al, String pathToFile, boolean unzip) throws IOException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, InvalidAlgorithmParameterException {
-		Path path = Paths.get(pathToKey);
+	private void decrypt(Algorithm al, String pathToFile, boolean unzip) throws IOException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, InvalidAlgorithmParameterException {
+		Path path;
+		if (al == Algorithm.AES) {
+			path = Paths.get("resources/key/AES");
+		}
+		else if (al == Algorithm.DES) {
+			path = Paths.get("resources/key/DES");
+		}
+		else {
+			path = Paths.get("resources/key/DESede");
+		}
 		byte[] encoded = Files.readAllBytes(path);
 		byte[] iv;
 		String pathToOutput = "";
@@ -138,7 +155,12 @@ public class Cryptography {
 			cipher.init(Cipher.DECRYPT_MODE, key, paramSpec);
 		}
 		else {
-			// Unknown Algorithm
+			iv = new byte[] { (byte) 0x8E, 0x12, 0x39, (byte) 0x9C, 0x07, 0x72, 0x6F, 0x5A , 0x07, 0x09, 0x1A, 0x3C, 0x4D, 0x7F, (byte)0x8C, 0x5A,  0x12, 0x39, (byte) 0x9C, 0x07, 0x72};
+		    AlgorithmParameterSpec paramSpec = new IvParameterSpec(iv);
+			SecretKey key = new SecretKeySpec(encoded, "DESede");
+			buf = new byte[21];
+			cipher = Cipher.getInstance("DESede/CBC/PKCS5Padding");
+			cipher.init(Cipher.DECRYPT_MODE, key, paramSpec);
 		}
 		in = new CipherInputStream(in, cipher);
 		
