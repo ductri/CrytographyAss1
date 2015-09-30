@@ -13,19 +13,21 @@ import javax.crypto.NoSuchPaddingException;
 import constanst.Mode;
 import model.Algorithm;
 
-public class AutoEncrypt implements Runnable{
+public class AutoEncryptDecrypt implements Runnable{
 	String pathToFolder = "";
 	Algorithm algorithm = Algorithm.AES;
+	Mode mode = Mode.ENCRYPTION;
 	int time = 0;
 	Timer timer;
-	public AutoEncrypt(int seconds, String path, Algorithm al) {
+	public AutoEncryptDecrypt(int seconds, String path, Algorithm al,Mode m) {
 		pathToFolder = path;
 		algorithm = al;
 		time = seconds;
+		mode = m;
 	}
 	public void run () {
 		timer = new Timer();
-		timer.scheduleAtFixedRate(new EncryptTask(pathToFolder, algorithm),0 ,  time * 1000);
+		timer.scheduleAtFixedRate(new EncryptTask(pathToFolder, algorithm, mode),0 ,  time * 1000);
 	}
 }
 
@@ -36,16 +38,24 @@ public class AutoEncrypt implements Runnable{
 class EncryptTask extends TimerTask {
 	String pathToFolder = "";
 	Algorithm algorithm = Algorithm.AES;
-	public EncryptTask(String path, Algorithm al) {
+	Mode mode = Mode.ENCRYPTION;
+	public EncryptTask(String path, Algorithm al,Mode m) {
 		pathToFolder = path;
 		algorithm = al;
+		mode = m;
 	}
 	public void run() {
-		System.out.println("Start");
-		ArrayList<File> listUnencryptedFiles = getUncryptFiles(pathToFolder);
-		for(File f:listUnencryptedFiles) {
+		ArrayList<File> listFiles;
+		if (mode == Mode.ENCRYPTION) {
+			listFiles = getUnencryptedFiles(pathToFolder);
+		}
+		else {
+			listFiles = getUndecryptedFiles(pathToFolder);
+		}
+		
+		for(File f:listFiles) {
 			try {
-				new Cryptography(algorithm, Mode.ENCRYPTION, f.getPath(), false);
+				new Cryptography(algorithm, mode, f.getPath(), false);
 			} catch (InvalidKeyException e) {
 				// TODO Auto-generated catch block
 				System.out.println("Failed 1");
@@ -68,12 +78,11 @@ class EncryptTask extends TimerTask {
 				e.printStackTrace();
 			}
 		}
-		System.out.println("Finish");
 	}
 	/*
-	 * Get an ArrayList of unencryped files in the folder
+	 * Get an ArrayList of unencrypted files in the folder
 	 */
-	private ArrayList<File> getUncryptFiles(String pathToFolder) {
+	private ArrayList<File> getUnencryptedFiles(String pathToFolder) {
 		File folder = new File(pathToFolder);
 		File[] listFiles = folder.listFiles();
 		ArrayList<File> listUnencryptedFiles = new ArrayList<File>();
@@ -98,6 +107,38 @@ class EncryptTask extends TimerTask {
 			}
 		}
 		return listUnencryptedFiles;
+	}
+	/*
+	 * Get an ArrayList of undecrypted files in the folder
+	 */
+	private ArrayList<File> getUndecryptedFiles(String pathToFolder) {
+		File folder = new File(pathToFolder);
+		File[] listFiles = folder.listFiles();	
+		ArrayList<File> listUndecryptedFiles = new ArrayList<File>();
+ 		
+		for(File f1:listFiles) {
+			boolean isDecrypted = false;
+			int pos = f1.getName().lastIndexOf(".");
+			if (pos < 4){
+				continue;
+			}
+			else if (!f1.getName().substring(0, 3).equals("en_")) {
+				continue;
+			}
+			for(File f2:listFiles) {
+				String name = f1.getName();
+				String name1 = name.substring(3, name.length());
+				String name2 = f2.getName();
+				if (name1.equals(name2)) {
+					isDecrypted = true;
+					break;
+				}
+			}
+			if (!isDecrypted) {
+				listUndecryptedFiles.add(f1);
+			}
+		}
+		return listUndecryptedFiles;
 	}
 }
 

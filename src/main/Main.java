@@ -25,12 +25,12 @@ public class Main {
 					//new Cryptography(Algorithm.AES, Mode.ENCRYPTION, "resources/a.pdf", false);
 					
 					/* Decrypt */
-					new Cryptography(Algorithm.AES, Mode.DECRYPTION, "F:\\Clone Code\\Cryptography\\Assignment 1\\resources\\AutoEncrypt\\en_corom_vi.exe", false);
+					//new Cryptography(Algorithm.AES, Mode.DECRYPTION, "F:\\Clone Code\\Cryptography\\Assignment 1\\resources\\AutoEncrypt\\en_corom_vi.exe", false);
 					
 					// Transparent
-					String pathToEncryptFolder = "F:\\Clone Code\\Cryptography\\Assignment 1\\resources\\AutoEncrypt";
-					Thread t = new Thread(new AutoEncrypt(2, pathToEncryptFolder, Algorithm.AES));
-					//t.start();
+					String pathToEncryptFolder = "F:\\Clone Code\\Cryptography\\Assignment 1\\resources\\Decrypt";
+					Thread t = new Thread(new AutoEncryptDecrypt(2, pathToEncryptFolder, Algorithm.AES, Mode.DECRYPTION));
+					t.start();
 					
 					long endTime   = System.currentTimeMillis();
 					long totalTime = endTime - startTime;
