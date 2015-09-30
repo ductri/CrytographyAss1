@@ -14,7 +14,6 @@ public class Main {
 	public static void main(String[] args) {
 		EventQueue.invokeLater(new Runnable() {
 			public void run() {
-
 				try 
 				{
 					BeautyEyeLNFHelper . frameBorderStyle = FrameBorderStyle.generalNoTranslucencyShadow;   
@@ -23,10 +22,10 @@ public class Main {
 					long startTime = System.currentTimeMillis();
 					
 					/* Encrypt */
-					new Cryptography(Algorithm.AES, Mode.ENCRYPTION, "resources/a.pdf", true);
+					//new Cryptography(Algorithm.AES, Mode.ENCRYPTION, "resources/a.pdf", false);
 					
 					/* Decrypt */
-					//new Cryptography(Algorithm.AES, Mode.DECRYPTION, "resources/ciphertext/a.zip", false);
+					new Cryptography(Algorithm.AES, Mode.DECRYPTION, "resources/en_a.pdf", false);
 
 					long endTime   = System.currentTimeMillis();
 					long totalTime = endTime - startTime;

@@ -53,6 +53,7 @@ public class Cryptography {
 		byte[] encoded = Files.readAllBytes(path);
 		String fileName = getFileName(pathToFile);
 		String extension = getExtension(pathToFile);
+		String pathToFolder = getPathToFolder(pathToFile);
 		InputStream in = new FileInputStream(pathToFile);
 		// Generate hash value   
 		byte[] hashValue = generateMD5(in);
@@ -61,12 +62,12 @@ public class Cryptography {
 		if (zip) {
 			compress(pathToFile);
 			extension = "zip";
-			pathToFile = "resources/zip/" + fileName + ".zip";
+			pathToFile = pathToFolder + "/" + fileName + ".zip";
 		}
 		
 		// Create Output file
 
-		String pathToOutput = "resources/ciphertext/" + fileName + "." + extension;
+		String pathToOutput = pathToFolder + "/en_" + fileName + "." + extension;
 		File file = new File(pathToOutput);
 		file.createNewFile();
 		OutputStream out = new FileOutputStream(pathToOutput);
@@ -127,13 +128,10 @@ public class Cryptography {
 		String pathToOutput = "";
 		String fileName = getFileName(pathToFile);
 		String extension = getExtension(pathToFile);
+		String pathToFolder = getPathToFolder(pathToFile);
 		InputStream in = new FileInputStream(pathToFile);
-		if (extension.equals("zip")) {
-			pathToOutput = "resources/zip/" + fileName + "." + extension;
-		}
-		else {
-			pathToOutput = "resources/plaintext/" + fileName + "." + extension;
-		}
+		pathToOutput = pathToFolder + "/" + fileName.substring(3, fileName.length()) + "." + extension;
+
 		File file = new File(pathToOutput);
 		file.createNewFile();
 		OutputStream out = new FileOutputStream(pathToOutput);
@@ -178,8 +176,7 @@ public class Cryptography {
 		in.close();
 		
 		if (extension.equals("zip")) {
-			extension = decompress(pathToOutput, "resources/plaintext");
-			pathToOutput = "resources/plaintext/" + fileName + "." + extension;
+			pathToOutput = decompress(pathToOutput);
 		}
 	    InputStream inputTemp = new FileInputStream(pathToOutput);
 	    //Get hash value from ciphertext
@@ -204,7 +201,7 @@ public class Cryptography {
 		}
 		
 		byte[] hashValue = digest.digest();
-		
+		in.close();
 		return hashValue;
 	}
 	
@@ -216,7 +213,8 @@ public class Cryptography {
         // out put file 
         String fileName = getFileName(pathToFile);
         String extension = getExtension(pathToFile);
-        ZipOutputStream out = new ZipOutputStream(new FileOutputStream("resources/zip/" + fileName +".zip"));
+        String pathToFolder = getPathToFolder(pathToFile);
+        ZipOutputStream out = new ZipOutputStream(new FileOutputStream(pathToFolder + "/" + fileName +".zip"));
 
         // name the file inside the zip  file 
         out.putNextEntry(new ZipEntry(fileName + "." + extension)); 
@@ -233,44 +231,47 @@ public class Cryptography {
 	}
 	
 	/*** Decompress function  ***/
-	private String decompress(String pathToFile, String pathToDir) throws IOException {
+	private String decompress(String pathToFile) throws IOException {
 		//get the zip file content
     	ZipInputStream zis = new ZipInputStream(new FileInputStream(pathToFile));
     	//get the zipped file list entry
     	ZipEntry ze = zis.getNextEntry();
     	String extension = "";
-    	while(ze!=null){
-    		
-    		String fileName = ze.getName();
-    		extension = getExtension(fileName);
-    		File newFile = new File(pathToDir + "/" + fileName);
-    		FileOutputStream fos = new FileOutputStream(newFile);             
+    	String pathToFolder = getPathToFolder(pathToFile);
+    	String fileName = ze.getName();
+    	File newFile = new File(pathToFolder + "/" + fileName);
+    	FileOutputStream fos = new FileOutputStream(newFile);             
 
-            int numRead;
-            byte[] b = new byte[1024];
-            while ((numRead = zis.read(b)) > 0) {
-            	fos.write(b, 0, numRead);
-            }
-            fos.close();   
-            ze = zis.getNextEntry();
-    	}
-    	
+        int numRead;
+        byte[] b = new byte[1024];
+        while ((numRead = zis.read(b)) > 0) {
+        	fos.write(b, 0, numRead);
+        }
+        fos.close();   
         zis.closeEntry();
     	zis.close();
-    	return extension;
+    	return pathToFolder + "/" + fileName;
+
 	}
 	/***** Help function *****/
 	
 	/*** Get name of a file without extension ***/
-	private String getFileName(String pathToFile){
+	private String getFileName(String pathToFile) {
 		int pos1 = pathToFile.lastIndexOf("/");
 		int pos2 = pathToFile.lastIndexOf(".");
 		return pathToFile.substring(pos1 + 1, pos2);
 	}
 	/*** Get extension of a file ***/
-	private String getExtension(String pathToFile){
+	private String getExtension(String pathToFile) {
 		int pos = pathToFile.lastIndexOf(".");
 		return pathToFile.substring(pos + 1, pathToFile.length());
+	}
+	/*
+	 * Get path to folder containing the file
+	 */
+	private String getPathToFolder(String pathToFile) {
+		int pos = pathToFile.lastIndexOf("/");
+		return pathToFile.substring(0, pos);
 	}
 	
 	/*** Convert from bytes to hex character : Use to show Md5 hash value ***/
