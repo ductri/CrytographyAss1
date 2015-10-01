@@ -387,7 +387,7 @@ public class MainFrame {
 						try {
 							Cryptography cry = new Cryptography(algorithm, modeClone,
 									fileInfo.getFileURL(), outputURL, true, compressProgressFunc, 
-									cryptoProgressFunc, true);
+									cryptoProgressFunc, false);
 							new Thread(cry).start();
 							threadNo++;
 							if (threadNo>1) {
@@ -399,7 +399,6 @@ public class MainFrame {
 							
 						} catch (InvalidKeyException | NoSuchAlgorithmException | NoSuchPaddingException
 								| InvalidAlgorithmParameterException | IOException e) {
-							// TODO Auto-generated catch block
 							e.printStackTrace();
 						}
 					}

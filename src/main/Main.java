@@ -34,9 +34,9 @@ public class Main {
 =======*/
 
 					// Transparent
-					String pathToEncryptFolder = "F:\\Clone Code\\Cryptography\\Assignment 1\\resources\\Encrypt";
+/*					String pathToEncryptFolder = "F:\\Clone Code\\Cryptography\\Assignment 1\\resources\\Encrypt";
 					Thread t = new Thread(new AutoEncryptDecrypt(2, pathToEncryptFolder, Algorithm.DESede, Mode.ENCRYPTION));
-					t.start();
+					t.start();*/
 					//new Cryptography(Algorithm.AES, Mode.ENCRYPTION, "resources/a.pdf", true);
 					//new Cryptography(Algorithm.AES, Mode.DECRYPTION, "resources/en_a.zip", true);
 

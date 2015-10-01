@@ -1,20 +1,27 @@
 package main;
 
+import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.ObjectInputStream;
 import java.io.OutputStream;
+import java.math.BigInteger;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
+import java.security.KeyFactory;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.spec.AlgorithmParameterSpec;
+import java.security.spec.RSAPrivateKeySpec;
+import java.security.spec.RSAPublicKeySpec;
 import java.util.Arrays;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -34,7 +41,6 @@ import constanst.Mode;
 public class Cryptography implements Runnable {
 	byte[] buf;
 	Cipher cipher;
-	PublicKey publicKey = null;
 	boolean MD5 = true;
 	String pathToZipFile = "resources";
 
@@ -64,19 +70,12 @@ public class Cryptography implements Runnable {
 		this.isDelete = isDelete;
 	}
 
-	/*** Encryption Function ***/
+	/*** Encryption Function 
+	 * @throws ClassNotFoundException ***/
 	private void encrypt(Algorithm al, String pathToFile, boolean zip, boolean isDelete) throws IOException, NoSuchAlgorithmException,
-			NoSuchPaddingException, InvalidKeyException, InvalidAlgorithmParameterException {
+			NoSuchPaddingException, InvalidKeyException, InvalidAlgorithmParameterException, ClassNotFoundException {
 		byte[] iv;
-		Path path;
-		if (al == Algorithm.AES) {
-			path = Paths.get("resources/key/AES");
-		} else if (al == Algorithm.DES) {
-			path = Paths.get("resources/key/DES");
-		} else {
-			path = Paths.get("resources/key/DESede");
-		}
-		byte[] encoded = Files.readAllBytes(path);
+		
 		String fileName = getFileName(pathToFile);
 		String extension = getExtension(pathToFile);
 		
@@ -89,7 +88,6 @@ public class Cryptography implements Runnable {
 
 		if (zip) {
 			compress(pathToFile);
-			System.out.println("Testing");
 			//Delete the original file
 			if (isDelete) {
 				Files.delete(Paths.get(pathToFile));
@@ -107,6 +105,8 @@ public class Cryptography implements Runnable {
 		OutputStream out = new FileOutputStream(pathToOutput);
 
 		if (al == Algorithm.AES) {
+			Path path = Paths.get("resources/key/AES");
+			byte[] encoded = Files.readAllBytes(path);
 			iv = new byte[] { (byte) 0x8E, 0x12, 0x39, (byte) 0x9C, 0x07, 0x72, 0x6F, 0x5A, 0x07, 0x09, 0x1A, 0x3C,
 					0x4D, 0x7F, (byte) 0x8C, 0x5A };
 			AlgorithmParameterSpec paramSpec = new IvParameterSpec(iv);
@@ -114,20 +114,33 @@ public class Cryptography implements Runnable {
 			buf = new byte[16];
 			cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
 			cipher.init(Cipher.ENCRYPT_MODE, key, paramSpec);
-		} else if (al == Algorithm.DES) {
+		} 
+		else if (al == Algorithm.DES) {
+			Path path = Paths.get("resources/key/DES");
+			byte[] encoded = Files.readAllBytes(path);
 			iv = new byte[] { (byte) 0x8E, 0x12, 0x39, (byte) 0x9C, 0x07, 0x72, 0x6F, 0x5A };
 			AlgorithmParameterSpec paramSpec = new IvParameterSpec(iv);
 			buf = new byte[8];
 			SecretKey key = new SecretKeySpec(encoded, "DES");
 			cipher = Cipher.getInstance("DES/CBC/PKCS5Padding");
 			cipher.init(Cipher.ENCRYPT_MODE, key, paramSpec);
-		} else {
+		} 
+		else  if (al == Algorithm.DESede){
+			Path path = Paths.get("resources/key/DESede");
+			byte[] encoded = Files.readAllBytes(path);
 			iv = new byte[] { (byte) 0x8E, 0x12, 0x39, (byte) 0x9C, 0x07, 0x72, 0x6F, 0x5A };
 			AlgorithmParameterSpec paramSpec = new IvParameterSpec(iv);
 			SecretKey key = new SecretKeySpec(encoded, "DESede");
 			buf = new byte[21];
 			cipher = Cipher.getInstance("DESede/CBC/PKCS5Padding");
 			cipher.init(Cipher.ENCRYPT_MODE, key, paramSpec);
+		}
+		else {
+			ObjectInputStream inputStream = new ObjectInputStream(new FileInputStream("resources/key/public.key"));
+			PublicKey publicKey = (PublicKey) inputStream.readObject();
+			buf = new byte[1024];
+			cipher = Cipher.getInstance("RSA");
+			cipher.init(Cipher.ENCRYPT_MODE, publicKey);
 		}
 
 		out = new CipherOutputStream(out, cipher);
@@ -161,18 +174,10 @@ public class Cryptography implements Runnable {
 
 	}
 
-	/*** Decryption Function ***/
+	/*** Decryption Function 
+	 * @throws ClassNotFoundException ***/
 	private void decrypt(Algorithm al, String pathToFile, boolean unzip, boolean isDelete) throws IOException, NoSuchAlgorithmException,
-			NoSuchPaddingException, InvalidKeyException, InvalidAlgorithmParameterException {
-		Path path;
-		if (al == Algorithm.AES) {
-			path = Paths.get("resources/key/AES");
-		} else if (al == Algorithm.DES) {
-			path = Paths.get("resources/key/DES");
-		} else {
-			path = Paths.get("resources/key/DESede");
-		}
-		byte[] encoded = Files.readAllBytes(path);
+			NoSuchPaddingException, InvalidKeyException, InvalidAlgorithmParameterException, ClassNotFoundException {
 		byte[] iv;
 		//String pathToOutput = "";
 		String fileName = getFileName(pathToFile);
@@ -186,6 +191,8 @@ public class Cryptography implements Runnable {
 		OutputStream out = new FileOutputStream(pathToOutput);
 
 		if (al == Algorithm.AES) {
+			Path path = Paths.get("resources/key/AES");
+			byte[] encoded = Files.readAllBytes(path);
 			iv = new byte[] { (byte) 0x8E, 0x12, 0x39, (byte) 0x9C, 0x07, 0x72, 0x6F, 0x5A, 0x07, 0x09, 0x1A, 0x3C,
 					0x4D, 0x7F, (byte) 0x8C, 0x5A };
 			AlgorithmParameterSpec paramSpec = new IvParameterSpec(iv);
@@ -194,19 +201,29 @@ public class Cryptography implements Runnable {
 			cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
 			cipher.init(Cipher.DECRYPT_MODE, key, paramSpec);
 		} else if (al == Algorithm.DES) {
+			Path path = Paths.get("resources/key/DES");
+			byte[] encoded = Files.readAllBytes(path);
 			iv = new byte[] { (byte) 0x8E, 0x12, 0x39, (byte) 0x9C, 0x07, 0x72, 0x6F, 0x5A };
 			AlgorithmParameterSpec paramSpec = new IvParameterSpec(iv);
 			buf = new byte[8];
 			SecretKey key = new SecretKeySpec(encoded, "DES");
 			cipher = Cipher.getInstance("DES/CBC/PKCS5Padding");
 			cipher.init(Cipher.DECRYPT_MODE, key, paramSpec);
-		} else {
+		} else if (al == Algorithm.DESede){
+			Path path = Paths.get("resources/key/DESede");
+			byte[] encoded = Files.readAllBytes(path);
 			iv = new byte[] { (byte) 0x8E, 0x12, 0x39, (byte) 0x9C, 0x07, 0x72, 0x6F, 0x5A };
 			AlgorithmParameterSpec paramSpec = new IvParameterSpec(iv);
 			SecretKey key = new SecretKeySpec(encoded, "DESede");
 			buf = new byte[21];
 			cipher = Cipher.getInstance("DESede/CBC/PKCS5Padding");
 			cipher.init(Cipher.DECRYPT_MODE, key, paramSpec);
+		} else {
+			ObjectInputStream inputStream = new ObjectInputStream(new FileInputStream("resources/key/private.key"));
+			PrivateKey privateKey = (PrivateKey) inputStream.readObject();
+			buf = new byte[1024];
+			cipher = Cipher.getInstance("RSA");
+			cipher.init(Cipher.DECRYPT_MODE, privateKey);
 		}
 
 		inputSize = in.available();
@@ -222,7 +239,12 @@ public class Cryptography implements Runnable {
 		while ((numRead = in.read(buf)) >= 0) {
 			out.write(buf, 0, numRead);
 			totalReaded += numRead;
-			cryptoProgressFunc.updateProgress(Math.round((totalReaded * 100) / inputSize));
+			if (al == Algorithm.RSA) {
+				cryptoProgressFunc.updateProgress(100);
+			}
+			else {
+				cryptoProgressFunc.updateProgress(Math.round((totalReaded * 100) / inputSize));
+			}
 		}
 		out.flush();
 		out.close();
@@ -360,15 +382,14 @@ public class Cryptography implements Runnable {
 			try {
 				encrypt(al, pathToFile, zip, isDelete);
 			} catch (InvalidKeyException | NoSuchAlgorithmException | NoSuchPaddingException
-					| InvalidAlgorithmParameterException | IOException e) {
-				// TODO Auto-generated catch block
+					| InvalidAlgorithmParameterException | IOException | ClassNotFoundException e) {
 				e.printStackTrace();
 			}
 		} else {
 			try {
 				decrypt(al, pathToFile, zip, isDelete);
 			} catch (InvalidKeyException | NoSuchAlgorithmException | NoSuchPaddingException
-					| InvalidAlgorithmParameterException | IOException e) {
+					| InvalidAlgorithmParameterException | IOException | ClassNotFoundException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}

@@ -61,26 +61,21 @@ class EncryptTask extends TimerTask {
 		for(File f:listFiles) {
 			try {
 				Cryptography cry = new Cryptography(algorithm, mode, f.getPath()
-						,pathToFolder ,false, null, null, false);
+						,pathToFolder ,false, null, null, true);
 				new Thread(cry).start();
 			} catch (InvalidKeyException e) {
-				// TODO Auto-generated catch block
 				System.out.println("Failed 1");
 				e.printStackTrace();
 			} catch (NoSuchAlgorithmException e) {
-				// TODO Auto-generated catch block
 				System.out.println("Failed 2");
 				e.printStackTrace();
 			} catch (NoSuchPaddingException e) {
-				// TODO Auto-generated catch block
 				System.out.println("Failed 3");
 				e.printStackTrace();
 			} catch (InvalidAlgorithmParameterException e) {
 				System.out.println("Failed 4");
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			} catch (IOException e) {
-				// TODO Auto-generated catch block
 				System.out.println("Failed 5");
 				e.printStackTrace();
 			}
