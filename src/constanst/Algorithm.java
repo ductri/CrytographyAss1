@@ -1,5 +1,5 @@
 package constanst;
 
 public enum Algorithm {
-	DSA, SDES
+	AES, DES, DESede
 }

@@ -8,11 +8,15 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
+import java.io.IOException;
+import java.security.InvalidAlgorithmParameterException;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Timer;
-import java.util.TimerTask;
 
+import javax.crypto.NoSuchPaddingException;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.ImageIcon;
@@ -38,6 +42,7 @@ import model.FolderInfo;
 import model.component.MyTableFiles;
 import model.component.MyTableFolders;
 import utils.Factory;
+import java.awt.Font;
 
 
 public class MainFrame {
@@ -50,7 +55,10 @@ public class MainFrame {
 	@SuppressWarnings("unused")
 	private Mode mode;
 	private Status status;
+	private Algorithm algorithm;
 	int percent=0;
+	List<FileInfo> files = new ArrayList<FileInfo>();
+	String outputURL = "C:\\Output";
 	
 	/****************************************
 	 *                                       *
@@ -71,7 +79,9 @@ public class MainFrame {
 	private JLayeredPane layeredBasic;
 	private JLayeredPane layeredAdvanced;
 	private JScrollPane scrollPaneFiles;
-	Timer timer; // Test
+	JRadioButton rdbtnAES;
+	JRadioButton rdbtnDes;
+	JRadioButton rdbtnDESede;
 	
 	public MainFrame() {
 		initInterface();
@@ -84,7 +94,7 @@ public class MainFrame {
 	private void initInterface() {
 		frame = new JFrame();
 		frame.setVisible(true);
-		frame.setBounds(100, 100, 900, 500);
+		frame.setBounds(100, 100, 1112, 501);
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		
 		/****************************************
@@ -110,23 +120,7 @@ public class MainFrame {
 			public void mouseExited(MouseEvent e) {
 				mnOpenFile.setIcon(Factory.getImageIcon("menu/menu_item/open_file_normal"));
 			}
-			@Override
-			public void mouseClicked(MouseEvent e) {
-				final JFileChooser fileChooser = new JFileChooser();
-				fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-				Thread t = new Thread(new Runnable() {
-					@Override
-					public void run() {
-						if (fileChooser.showOpenDialog(fileChooser) == JFileChooser.APPROVE_OPTION) {
-							File files[] = fileChooser.getSelectedFiles();
-						}
-						else {
-							System.out.println("File access cancelled by user.");
-						}
-					}
-				});
-				t.start();
-			}
+			
 		});
 		menuBar.add(mnOpenFile);
 		
@@ -169,7 +163,7 @@ public class MainFrame {
 		frame.getContentPane().setLayout(null);
 		
 		tabbedPane = new JTabbedPane(JTabbedPane.TOP);
-		tabbedPane.setBounds(0, 0, 884, 409);
+		tabbedPane.setBounds(0, 0, 1096, 409);
 		frame.getContentPane().add(tabbedPane);
 		
 		layeredBasic = new JLayeredPane();
@@ -179,23 +173,10 @@ public class MainFrame {
 		scrollPaneFiles = new JScrollPane();
 		scrollPaneFiles.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 		scrollPaneFiles.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
-		scrollPaneFiles.setBounds(200, 48, 690, 333);
+		scrollPaneFiles.setBounds(200, 48, 891, 333);
 		layeredBasic.add(scrollPaneFiles);
 		
 		// TABLE
-		List<FileInfo> files = new ArrayList<FileInfo>();
-		files.add(new FileInfo("C:/abc.txt", 400, 0, true));
-		files.add(new FileInfo("D:/das/dsa/abc.txt", 40000, 0, true));
-		files.add(new FileInfo("C:/abc.txt", 400, 56, true));
-		files.add(new FileInfo("D:/das/dsa/abc.txt", 40000, 0, true));
-		files.add(new FileInfo("C:/abc.txt", 400, 56, true));
-		files.add(new FileInfo("D:/das/dsa/abc.txt", 40000, 0, true));
-		files.add(new FileInfo("C:/abc.txt", 400, 56, true));
-		files.add(new FileInfo("D:/das/dsa/abc.txt", 40000, 0, true));
-		files.add(new FileInfo("C:/abc.txt", 400, 56, true));
-		files.add(new FileInfo("D:/das/dsa/abc.txt", 40000, 0, true));
-		files.add(new FileInfo("C:/abc.txt", 400, 56, true));
-		files.add(new FileInfo("D:/das/dsa/abc.txt", 40000, 86, true));
 		
 		tableFile = new MyTableFiles(files);
 	    scrollPaneFiles.setViewportView(tableFile.getTable());
@@ -203,22 +184,12 @@ public class MainFrame {
 	    
 	    
 	    JToolBar toolBar = new JToolBar();
-	    toolBar.setBounds(200, 0, 679, 59);
+	    toolBar.setBounds(200, 0, 891, 59);
 	    layeredBasic.add(toolBar);
 	    
 	    btnStartProcess = new JButton("Start");
 	    btnStartProcess.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 30));
-	    btnStartProcess.addMouseListener(new MouseAdapter() {
-	    	@Override
-	    	public void mouseClicked(MouseEvent e) {
-	    		if (status == Status.STOP)
-	    			changeStatus(Action.START);
-	    		else if (status == Status.RUNNING)
-	    			changeStatus(Action.PAUSE);
-	    		else if (status == Status.PAUSE)
-	    			changeStatus(Action.RESUME);
-	    	}
-	    });
+	    
 	    btnStartProcess.setIcon(Factory.getImageIcon("toolbar/start_process"));
 	    toolBar.add(btnStartProcess);
 	    
@@ -232,17 +203,38 @@ public class MainFrame {
 	    btnStopProcess.setIcon(Factory.getImageIcon("toolbar/stop_process"));
 	    toolBar.add(btnStopProcess);
 	    
-	    JRadioButton rdbtnRsa = new JRadioButton("RSA");
-	    rdbtnRsa.setBounds(20, 59, 109, 23);
-	    layeredBasic.add(rdbtnRsa);
+	    rdbtnAES = new JRadioButton("AES");
+	    rdbtnAES.addMouseListener(new MouseAdapter() {
+	    	@Override
+	    	public void mouseClicked(MouseEvent arg0) {
+	    		chooseAlgorithm(Algorithm.AES);
+	    	}
+	    });
+	    rdbtnAES.setFont(new Font("Tahoma", Font.PLAIN, 16));
+	    rdbtnAES.setBounds(14, 63, 161, 43);
+	    layeredBasic.add(rdbtnAES);
 	    
-	    JRadioButton rdbtnSdes = new JRadioButton("S-DES");
-	    rdbtnSdes.setBounds(20, 86, 109, 23);
-	    layeredBasic.add(rdbtnSdes);
+	    rdbtnDes = new JRadioButton("DES");
+	    rdbtnDes.addMouseListener(new MouseAdapter() {
+	    	@Override
+	    	public void mouseClicked(MouseEvent arg0) {
+	    		chooseAlgorithm(Algorithm.DES);
+	    	}
+	    });
+	    rdbtnDes.setFont(new Font("Tahoma", Font.PLAIN, 16));
+	    rdbtnDes.setBounds(13, 127, 162, 43);
+	    layeredBasic.add(rdbtnDes);
 	    
-	    JRadioButton rdbtnUnkown = new JRadioButton("Unkown");
-	    rdbtnUnkown.setBounds(20, 112, 109, 23);
-	    layeredBasic.add(rdbtnUnkown);
+	    rdbtnDESede = new JRadioButton("DESede");
+	    rdbtnDESede.addMouseListener(new MouseAdapter() {
+	    	@Override
+	    	public void mouseClicked(MouseEvent arg0) {
+	    		chooseAlgorithm(Algorithm.DESede);
+	    	}
+	    });
+	    rdbtnDESede.setFont(new Font("Tahoma", Font.PLAIN, 16));
+	    rdbtnDESede.setBounds(14, 188, 166, 43);
+	    layeredBasic.add(rdbtnDESede);
 	    
 	    layeredAdvanced = new JLayeredPane();
 	    tabbedPane.addTab("Advanced", null, layeredAdvanced, null);
@@ -252,15 +244,17 @@ public class MainFrame {
 	    layeredAdvanced.add(scrollPaneFolders);
 	    
 	    List<FolderInfo> folders = new ArrayList<FolderInfo>();
-	    folders.add(new FolderInfo("C:/abc.txt", 400, Algorithm.DSA));
-	    folders.add(new FolderInfo("C:/abc.txt", 400, Algorithm.DSA));
-	    folders.add(new FolderInfo("C:/abc.txt", 400, Algorithm.DSA));
-	    folders.add(new FolderInfo("C:/abc.txt", 400, Algorithm.DSA));
-	    folders.add(new FolderInfo("C:/abc.txt", 400, Algorithm.DSA));
+	    folders.add(new FolderInfo("C:/abc.txt", 400, Algorithm.DES));
+	    folders.add(new FolderInfo("C:/abc.txt", 400, Algorithm.DES));
+	    folders.add(new FolderInfo("C:/abc.txt", 400, Algorithm.DES));
+	    folders.add(new FolderInfo("C:/abc.txt", 400, Algorithm.DES));
+	    folders.add(new FolderInfo("C:/abc.txt", 400, Algorithm.DES));
 	    
 		tableFolder = new MyTableFolders(folders);
 		scrollPaneFolders.setViewportView(tableFolder.getTable());
 	}
+	
+	
 	
 	/**
 	 * Init all functional components.
@@ -272,6 +266,50 @@ public class MainFrame {
 		
 		this.status = Status.STOP;
 		this.btnStopProcess.setEnabled(false);
+		chooseAlgorithm(Algorithm.AES);
+		initFunctionalEvent();
+	}
+	
+	private void initFunctionalEvent() {
+		mnOpenFile.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				final JFileChooser fileChooser = new JFileChooser();
+				fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+				fileChooser.setMultiSelectionEnabled(true);
+				Thread t = new Thread(new Runnable() {
+					@Override
+					public void run() {
+						if (fileChooser.showOpenDialog(fileChooser) == JFileChooser.APPROVE_OPTION) {
+							File fileSelections[] = fileChooser.getSelectedFiles();
+							for (File f:fileSelections) {
+								FileInfo fileInfo = new FileInfo(f.getAbsolutePath(), f.length(), 
+										true, 0, 0, true);
+								files.add(fileInfo);
+							}
+							tableFile.update();
+							
+						}	
+						else {
+							System.out.println("File access cancelled by user.");
+						}
+					}
+				});
+				t.start();
+			}
+		});
+		
+		btnStartProcess.addMouseListener(new MouseAdapter() {
+	    	@Override
+	    	public void mouseClicked(MouseEvent e) {
+	    		if (status == Status.STOP)
+	    			changeStatus(Action.START);
+	    		else if (status == Status.RUNNING)
+	    			changeStatus(Action.PAUSE);
+	    		else if (status == Status.PAUSE)
+	    			changeStatus(Action.RESUME);
+	    	}
+	    });
 	}
 	
 	private void changeMode(Mode mode) {
@@ -288,19 +326,24 @@ public class MainFrame {
 			this.mode = mode;
 		}
 	}
-
+	int rowIndex=0;
 	private void changeStatus(Action action) {
+		if (files.isEmpty())
+			return;
+		
 		if (action == Action.STOP) {
 			btnStartProcess.setIcon(Factory.getImageIcon("toolbar/start_process"));
     		btnStartProcess.setText("Start");
     		btnStopProcess.setEnabled(false);
     		this.status = Status.STOP;
+    		
+    		
 		}
 		else if (action == Action.PAUSE) {
     		btnStartProcess.setIcon(Factory.getImageIcon("toolbar/start_process"));
     		btnStartProcess.setText("Resume");
     		this.status = Status.PAUSE;
-    		timer.cancel();
+
 		}
 		else if (action == Action.RESUME) {
     		btnStartProcess.setIcon(Factory.getImageIcon("toolbar/pause_process"));
@@ -313,16 +356,85 @@ public class MainFrame {
     		btnStartProcess.setText("Pause");
     		status = Status.RUNNING;
     		btnStopProcess.setEnabled(true);
-    		timer = new Timer();
-    		timer.schedule(new TimerTask() {
-    			
-    			@Override
-    			public void run() {
-    				percent++;
-    				tableFile.updateProgress(0, percent);
-    				
-    			}
-    		}, 500, 100);
+    		rowIndex = 0;
+    		
+    		new Thread(new Runnable() {
+				
+				@Override
+				public void run() {
+					// De tranh truong hop dang encryption/decryption mot list file ma 
+					// nguoi dung la doi mode
+					long start = System.currentTimeMillis();
+					Mode modeClone = mode;
+					int threadNo=0;
+					for (FileInfo fileInfo:files) {
+						ProgressFunction compressProgressFunc = new ProgressFunction(rowIndex) {
+							
+							@Override
+							public void updateProgress(int percent) {
+								tableFile.updateCompressProgress(rowIndex, percent);
+								
+							}
+						};
+						ProgressFunction cryptoProgressFunc = new ProgressFunction(rowIndex) {
+							
+							@Override
+							public void updateProgress(int percent) {
+								tableFile.updateCryptoProgress(rowIndex, percent);
+								
+							}
+						};
+						try {
+							Cryptography cry = new Cryptography(algorithm, modeClone,
+									fileInfo.getFileURL(), outputURL, true, compressProgressFunc, 
+									cryptoProgressFunc, true);
+							new Thread(cry).start();
+							threadNo++;
+							if (threadNo>1) {
+								cry.waitDone();
+								threadNo-=2;
+							}
+							
+							rowIndex ++;
+							
+						} catch (InvalidKeyException | NoSuchAlgorithmException | NoSuchPaddingException
+								| InvalidAlgorithmParameterException | IOException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+					}
+					long end = System.currentTimeMillis();
+					
+					System.out.println("Time consuming: "+ (end - start)/1000.0 +" s");
+				}
+			}).start();
+    		
+    		
+		}
+	}
+
+	private void chooseAlgorithm(Algorithm al) 
+	{
+		if (al == Algorithm.AES) {
+			this.algorithm = Algorithm.AES;
+			
+			rdbtnAES.setSelected(true);
+			rdbtnDes.setSelected(false);
+			rdbtnDESede.setSelected(false);
+		}
+		else if (al == Algorithm.DES) {
+			this.algorithm = Algorithm.DES;
+			
+			rdbtnAES.setSelected(false);
+			rdbtnDes.setSelected(true);
+			rdbtnDESede.setSelected(false);
+		}
+		else if (al == Algorithm.DESede) {
+			this.algorithm = Algorithm.DESede;
+			
+			rdbtnAES.setSelected(false);
+			rdbtnDes.setSelected(false);
+			rdbtnDESede.setSelected(true);
 		}
 	}
 }

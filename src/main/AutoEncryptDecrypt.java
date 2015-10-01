@@ -10,8 +10,9 @@ import java.util.TimerTask;
 
 import javax.crypto.NoSuchPaddingException;
 
+import constanst.Algorithm;
 import constanst.Mode;
-import model.Algorithm;
+
 
 public class AutoEncryptDecrypt implements Runnable{
 	String pathToFolder = "";
@@ -29,6 +30,10 @@ public class AutoEncryptDecrypt implements Runnable{
 		timer = new Timer();
 		timer.scheduleAtFixedRate(new EncryptTask(pathToFolder, algorithm, mode),0 ,  time * 1000);
 	}
+	
+	public void cancel() {
+		timer.cancel();
+	}
 }
 
 /*
@@ -36,13 +41,13 @@ public class AutoEncryptDecrypt implements Runnable{
  * Encrypt all files which are not encrypted in the folder
  */
 class EncryptTask extends TimerTask {
-	String pathToFolder = "";
-	Algorithm algorithm = Algorithm.AES;
-	Mode mode = Mode.ENCRYPTION;
+	String pathToFolder;
+	Algorithm algorithm;
+	Mode mode;
 	public EncryptTask(String path, Algorithm al,Mode m) {
-		pathToFolder = path;
-		algorithm = al;
-		mode = m;
+		this.pathToFolder = path;
+		this.algorithm = al;
+		this.mode = m;
 	}
 	public void run() {
 		ArrayList<File> listFiles;
@@ -55,7 +60,9 @@ class EncryptTask extends TimerTask {
 		
 		for(File f:listFiles) {
 			try {
-				new Cryptography(algorithm, mode, f.getPath(), false);
+				Cryptography cry = new Cryptography(algorithm, mode, f.getPath()
+						,pathToFolder ,false, null, null, false);
+				new Thread(cry).start();
 			} catch (InvalidKeyException e) {
 				// TODO Auto-generated catch block
 				System.out.println("Failed 1");
