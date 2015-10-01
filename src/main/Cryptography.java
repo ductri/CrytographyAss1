@@ -57,10 +57,11 @@ public class Cryptography {
 		InputStream in = new FileInputStream(pathToFile);
 		// Generate hash value   
 		byte[] hashValue = generateMD5(in);
-		
+		in.close();
 		//User chooses to compress file before encrypting
 		if (zip) {
 			compress(pathToFile);
+			Files.delete(Paths.get(pathToFile));
 			extension = "zip";
 			pathToFile = pathToFolder + "\\" + fileName + ".zip";
 		}
@@ -109,6 +110,7 @@ public class Cryptography {
 		out.flush();
 		out.close();
 		in.close();
+		Files.delete(Paths.get(pathToFile));
 	}
 	
 	/*** Decryption Function ***/
@@ -174,14 +176,21 @@ public class Cryptography {
 		out.flush();
 		out.close();
 		in.close();
+		Files.delete(Paths.get(pathToFile));
 		
+		String outputUrl = "";
 		if (extension.equals("zip")) {
-			pathToOutput = decompress(pathToOutput);
+			outputUrl = decompress(pathToOutput);
+		    Files.delete(Paths.get(pathToOutput));
 		}
-	    InputStream inputTemp = new FileInputStream(pathToOutput);
+		else {
+			outputUrl = pathToOutput;
+		}
+	    InputStream inputTemp = new FileInputStream(outputUrl);
 	    //Get hash value from ciphertext
 	    byte[] hashValueInCipherText = generateMD5(inputTemp);
-	    
+	    inputTemp.close();
+
 	    //Compare hash value
 	    if (!Arrays.equals(hashValueInPlainText, hashValueInCipherText)) {
 	    	System.out.println("Check MD5: False");
@@ -201,7 +210,6 @@ public class Cryptography {
 		}
 		
 		byte[] hashValue = digest.digest();
-		in.close();
 		return hashValue;
 	}
 	

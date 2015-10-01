@@ -7,8 +7,6 @@ import org.jb2011.lnf.beautyeye.BeautyEyeLNFHelper.FrameBorderStyle;
 
 import constanst.Mode;
 import model.Algorithm;
-import java.security.Provider;
-import java.security.Security;
 
 public class Main {
 	public static void main(String[] args) {
@@ -25,7 +23,7 @@ public class Main {
 					//new Cryptography(Algorithm.AES, Mode.ENCRYPTION, "resources/a.pdf", false);
 					
 					/* Decrypt */
-					//new Cryptography(Algorithm.AES, Mode.DECRYPTION, "F:\\Clone Code\\Cryptography\\Assignment 1\\resources\\AutoEncrypt\\en_corom_vi.exe", false);
+					//new Cryptography(Algorithm.AES, Mode.DECRYPTION, "F:\\Clone Code\\Cryptography\\Assignment 1\\resources\\en_cipher.jpg", false);
 					
 					// Transparent
 					String pathToEncryptFolder = "F:\\Clone Code\\Cryptography\\Assignment 1\\resources\\Decrypt";
